@@ -1,1010 +1,409 @@
 <!DOCTYPE html>
-<html lang="ru" class="dark">
+<html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AlicaGrader Telegram Mini App</title>
-    
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- FontAwesome Icons CDN -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Canvas Confetti CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    
-    <!-- Crypto-JS for Provably Fair SHA-256 Verification -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-    
-    <!-- Telegram WebApp SDK -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        agDark: '#080811',
-                        agCard: '#121222',
-                        agCardHover: '#1a1a30',
-                        agBorder: '#232342',
-                        agPurple: '#8b5cf6',
-                        agPink: '#ec4899',
-                        agEmerald: '#10b981',
-                        agRose: '#f43f5e',
-                        agAmber: '#f59e0b'
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace']
-                    }
-                }
-            }
-        }
-    </script>
-
-    <style>
-        body {
-            background-color: #080811;
-            color: #f1f5f9;
-            user-select: none;
-            -webkit-user-select: none;
-            overflow-x: hidden;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            touch-action: manipulation;
-        }
-
-        /* Glassmorphic elements */
-        .glass-panel {
-            background: rgba(18, 18, 34, 0.75);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(139, 92, 246, 0.18);
-        }
-
-        .glass-button {
-            background: rgba(35, 35, 66, 0.5);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            transition: all 0.15s ease;
-        }
-
-        .glass-button:active {
-            transform: scale(0.96);
-        }
-
-        /* Glow utilities */
-        .glow-purple {
-            box-shadow: 0 0 25px rgba(139, 92, 246, 0.35);
-        }
-
-        .glow-win {
-            box-shadow: 0 0 30px rgba(16, 185, 129, 0.45);
-        }
-
-        .glow-lose {
-            box-shadow: 0 0 30px rgba(244, 63, 94, 0.45);
-        }
-
-        .text-glow-pink {
-            text-shadow: 0 0 10px rgba(236, 72, 153, 0.7);
-        }
-
-        /* Radar Pointer smooth transition */
-        .radar-pointer {
-            transform-origin: 100px 100px;
-            will-change: transform;
-        }
-
-        /* Pulse Animations */
-        @keyframes radarGlow {
-            0%, 100% { filter: drop-shadow(0 0 12px rgba(139, 92, 246, 0.4)); }
-            50% { filter: drop-shadow(0 0 22px rgba(236, 72, 153, 0.75)); }
-        }
-
-        .radar-glow-effect {
-            animation: radarGlow 3.5s infinite ease-in-out;
-        }
-
-        /* Shake animation on loss */
-        @keyframes shakeLoss {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-8px); }
-            40%, 80% { transform: translateX(8px); }
-        }
-
-        .animate-shake {
-            animation: shakeLoss 0.4s ease-in-out;
-        }
-
-        /* Custom Scrollbars */
-        ::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
-        }
-        ::-webkit-scrollbar-track {
-            background: rgba(8, 8, 17, 0.8);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #232342;
-            border-radius: 4px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AlicaGrader - Upgrader Game</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-color: #0b0d17;
+      --card-bg: rgba(22, 27, 46, 0.7);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent-purple: #8b5cf6;
+      --accent-pink: #ec4899;
+      --accent-emerald: #10b981;
+      --accent-rose: #f43f5e;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: 20px;
+    }
+    .header {
+      background: rgba(15, 21, 37, 0.9);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .brand-title {
+      font-weight: 900;
+      font-size: 1.2rem;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .user-pill {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .balance-badge {
+      color: #f59e0b;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .nav-tabs {
+      display: flex;
+      gap: 6px;
+      padding: 12px 16px 0;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 8px 14px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.2));
+      border-color: var(--accent-purple);
+      color: #fff;
+    }
+    .main-content {
+      padding: 16px;
+      flex: 1;
+    }
+    .tab-page { display: none; }
+    .tab-page.active { display: block; }
+    .radar-wrapper {
+      position: relative;
+      width: 240px;
+      height: 240px;
+      margin: 10px auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .radar-svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+    .radar-center {
+      position: absolute;
+      width: 140px;
+      height: 140px;
+      background: #111528;
+      border-radius: 50%;
+      border: 2px solid var(--card-border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+      z-index: 2;
+    }
+    .roll-number {
+      font-size: 1.8rem;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+    }
+    .roll-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .input-group label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .input-field {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+      width: 100%;
+    }
+    .input-field:focus {
+      border-color: var(--accent-purple);
+    }
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .leaderboard-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .leader-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      padding: 12px;
+      border-radius: 12px;
+    }
+    .leader-rank {
+      font-weight: 800;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+    }
+    .rank-1 { background: #f59e0b; color: #000; }
+    .rank-2 { background: #9ca3af; color: #000; }
+    .rank-3 { background: #d97706; color: #fff; }
+    .tap-btn {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid var(--accent-emerald);
+      color: var(--accent-emerald);
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      width: 100%;
+    }
+  </style>
 </head>
-<body class="min-h-screen pb-12 flex flex-col justify-between antialiased">
+<body>
 
-    <header class="sticky top-0 z-40 glass-panel border-b border-agBorder/60 px-4 py-3 flex items-center justify-between">
-        <!-- Brand & User Profile Info -->
-        <div class="flex items-center gap-2.5">
-            <div id="userAvatar" class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 via-pink-500 to-rose-500 p-0.5 flex items-center justify-center shadow-lg shadow-purple-500/25">
-                <div class="w-full h-full bg-agDark rounded-[14px] flex items-center justify-center font-black text-sm text-pink-400" id="avatarInitial">
-                    A
-                </div>
-            </div>
-            <div>
-                <h1 class="font-extrabold text-xs tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400 flex items-center gap-1.5">
-                    <i class="fa-solid fa-gamepad text-purple-400"></i> ALICAGRADER
-                </h1>
-                <p id="userNameDisplay" class="text-[11px] text-slate-400 font-medium truncate max-w-[120px]">Алиса Игрок</p>
-            </div>
+  <div class="header">
+    <div class="brand-title">
+      <i class="fa-solid fa-bolt"></i> AlicaGrader
+    </div>
+    <div class="user-pill">
+      <span id="userName">Игрок</span>
+      <div class="balance-badge">
+        <i class="fa-solid fa-coins"></i>
+        <span id="userBalance">1000</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('game')"><i class="fa-solid fa-gamepad"></i> Апгрейдер</button>
+    <button class="tab-btn" onclick="switchTab('leaderboard')"><i class="fa-solid fa-trophy"></i> Лидерборд</button>
+  </div>
+
+  <div class="main-content">
+    <!-- ИГРА -->
+    <div id="tab-game" class="tab-page active">
+      <div class="radar-wrapper">
+        <svg class="radar-svg" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(244,63,94,0.3)" stroke-width="8"/>
+          <circle id="winArc" cx="50" cy="50" r="45" fill="none" stroke="#10b981" stroke-width="8" stroke-dasharray="0 283"/>
+        </svg>
+        <div class="radar-center">
+          <div id="rollNum" class="roll-number">0.00</div>
+          <div id="rollStatus" class="roll-status">Шанс 47.5%</div>
         </div>
+      </div>
 
-        <!-- Balance Display & Tap-to-Claim Bonus Button -->
-        <div class="flex items-center gap-2">
-            <button onclick="claimTapBonus()" title="Получить +100 Alica Coins" 
-                class="glass-button px-2.5 py-1.5 rounded-xl flex items-center gap-1 text-[11px] font-bold text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 active:scale-95 transition-all">
-                <i class="fa-solid fa-hand-pointer text-xs"></i>
-                <span>+100</span>
-            </button>
-
-            <div class="bg-agDark/90 border border-agBorder rounded-xl px-3 py-1.5 flex items-center gap-1.5 shadow-inner">
-                <span class="text-xs">🌟</span>
-                <span id="userBalanceText" class="font-bold text-sm font-mono text-amber-300">1,000.00</span>
-            </div>
-
-            <!-- Mute / Unmute Toggle -->
-            <button id="soundToggleBtn" onclick="toggleSound()" class="w-9 h-9 rounded-xl glass-button flex items-center justify-center text-slate-300 hover:text-white">
-                <i id="soundIcon" class="fa-solid fa-volume-high text-xs text-purple-400"></i>
-            </button>
+      <div class="card">
+        <div class="input-group">
+          <label>Ваша ставка (Монеты)</label>
+          <input type="number" id="betInput" class="input-field" value="100" oninput="recalcChance()">
         </div>
-    </header>
-
-    <main class="max-w-md mx-auto w-full px-4 pt-3 flex-1 flex flex-col gap-3.5">
-
-        <div class="grid grid-cols-2 p-1 bg-agCard/80 border border-agBorder rounded-2xl gap-1">
-            <button onclick="switchGameMode('cash')" id="modeCashBtn" class="py-2 rounded-xl text-xs font-bold transition-all bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg">
-                <i class="fa-solid fa-coins mr-1.5"></i> Монеты (Cash)
-            </button>
-            <button onclick="switchGameMode('inventory')" id="modeInventoryBtn" class="py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200">
-                <i class="fa-solid fa-box-open mr-1.5"></i> Инвентарь (Items)
-            </button>
+        <div class="input-group">
+          <label>Желаемая цель (Множитель / Монеты)</label>
+          <input type="number" id="targetInput" class="input-field" value="200" oninput="recalcChance()">
         </div>
-
-        <section class="glass-panel rounded-3xl p-4 text-center relative overflow-hidden flex flex-col items-center justify-center border border-agBorder glow-purple">
-            <div class="absolute -inset-10 bg-gradient-to-tr from-purple-600/15 via-pink-500/10 to-rose-500/15 rounded-full blur-3xl pointer-events-none"></div>
-
-            <div class="relative w-64 h-64 my-1 flex items-center justify-center radar-glow-effect">
-                <svg id="radarSvg" class="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
-                    <defs>
-                        <linearGradient id="winGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#10b981" />
-                            <stop offset="100%" stop-color="#059669" />
-                        </linearGradient>
-                        <linearGradient id="loseGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#f43f5e" />
-                            <stop offset="100%" stop-color="#881337" />
-                        </linearGradient>
-                    </defs>
-
-                    <!-- Outer Circle Frame -->
-                    <circle cx="100" cy="100" r="96" fill="none" stroke="#232342" stroke-width="2" stroke-dasharray="4 4" />
-                    
-                    <!-- Lose Sector Arc (Red Base) -->
-                    <circle id="lossArc" cx="100" cy="100" r="82" fill="none" stroke="url(#loseGradient)" stroke-width="22" />
-
-                    <!-- Win Sector Arc (Emerald Green Dynamic Arc) -->
-                    <path id="winSector" fill="none" stroke="url(#winGradient)" stroke-width="22" d="" />
-
-                    <!-- Inner Circle Cutout -->
-                    <circle cx="100" cy="100" r="68" fill="#080811" stroke="#232342" stroke-width="2" />
-                    <circle cx="100" cy="100" r="50" fill="none" stroke="#232342" stroke-width="1" stroke-dasharray="2 6" opacity="0.6" />
-
-                    <!-- Radar Pointer Pointer Group -->
-                    <g id="radarPointerGroup" class="radar-pointer">
-                        <line x1="100" y1="100" x2="100" y2="24" stroke="#ec4899" stroke-width="3" stroke-linecap="round" />
-                        <polygon points="100,12 94,26 106,26" fill="#ec4899" />
-                        <circle cx="100" cy="100" r="8" fill="#ec4899" />
-                        <circle cx="100" cy="100" r="4" fill="#ffffff" />
-                    </g>
-                </svg>
-
-                <!-- Center Display Overlay -->
-                <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-                    <span id="chanceDisplay" class="text-3xl font-black font-mono tracking-tight text-white drop-shadow-md">47.50%</span>
-                    <span id="multiplierDisplay" class="text-[11px] font-bold tracking-wider text-pink-400 mt-0.5">x2.00 МНОЖИТЕЛЬ</span>
-                    <div id="statusBadge" class="mt-2 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-agCard border border-agBorder text-slate-300">
-                        ГОТОВ К РОЛЛУ
-                    </div>
-                </div>
-            </div>
-
-            <!-- Parameters Bar -->
-            <div class="w-full grid grid-cols-2 gap-2 mt-2 pt-2.5 border-t border-agBorder/60 text-xs">
-                <div class="bg-agDark/80 rounded-xl p-2 border border-agBorder/80">
-                    <span class="text-slate-400 block text-[10px] font-semibold">ЗОНА ВЫИГРЫША</span>
-                    <span id="winRangeText" class="font-mono font-bold text-emerald-400 text-xs">0.00 - 47.50</span>
-                </div>
-                <div class="bg-agDark/80 rounded-xl p-2 border border-agBorder/80">
-                    <span class="text-slate-400 block text-[10px] font-semibold">РОЛЛ ДЛЯ ПОБЕДЫ</span>
-                    <span id="rollTargetText" class="font-mono font-bold text-pink-400 text-xs">&le; 47.50</span>
-                </div>
-            </div>
-        </section>
-
-        <section id="cashControls" class="glass-panel rounded-3xl p-4 space-y-3.5 border border-agBorder">
-            <!-- Stake Input -->
-            <div>
-                <div class="flex justify-between items-center mb-1.5">
-                    <label class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                        <i class="fa-solid fa-coins text-amber-400"></i> ВАША СТАВКА
-                    </label>
-                    <span class="text-[11px] text-slate-400">Баланс: <span id="maxStakeLabel" class="font-mono text-slate-200">1000</span></span>
-                </div>
-                <div class="flex gap-1.5">
-                    <div class="relative flex-1">
-                        <input type="number" id="stakeInput" value="100" min="1" step="10" 
-                            oninput="calculateUpgradeParams()"
-                            class="w-full bg-agDark border border-agBorder rounded-xl px-3 py-2 text-slate-100 font-mono font-bold focus:outline-none focus:border-purple-500 transition-colors text-sm pl-8">
-                        <span class="absolute left-2.5 top-2.5 text-xs">🌟</span>
-                    </div>
-                    <!-- Stake Quick Helper Chips -->
-                    <button onclick="setStakeMin()" class="glass-button px-2 py-1 rounded-xl text-[11px] font-bold text-slate-300">MIN</button>
-                    <button onclick="modifyStake(0.5)" class="glass-button px-2 py-1 rounded-xl text-[11px] font-bold text-slate-300">/2</button>
-                    <button onclick="modifyStake(2)" class="glass-button px-2 py-1 rounded-xl text-[11px] font-bold text-slate-300">x2</button>
-                    <button onclick="setStakeFraction(1.0)" class="glass-button px-2 py-1 rounded-xl text-[11px] font-bold text-amber-400">MAX</button>
-                </div>
-            </div>
-
-            <!-- Target Multiplier Chips -->
-            <div>
-                <div class="flex justify-between items-center mb-1.5">
-                    <label class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                        <i class="fa-solid fa-bolt text-purple-400"></i> ЦЕЛЬ / МНОЖИТЕЛЬ
-                    </label>
-                    <span id="targetRewardText" class="text-xs font-mono font-bold text-emerald-400">200.00 Coins</span>
-                </div>
-
-                <div class="grid grid-cols-5 gap-1.5">
-                    <button onclick="selectMultiplier(1.2)" class="mult-btn glass-button py-1.5 rounded-xl text-xs font-bold font-mono text-slate-300">x1.2</button>
-                    <button onclick="selectMultiplier(1.5)" class="mult-btn glass-button py-1.5 rounded-xl text-xs font-bold font-mono text-slate-300">x1.5</button>
-                    <button onclick="selectMultiplier(2.0)" class="mult-btn glass-button py-1.5 rounded-xl text-xs font-bold font-mono border-purple-500/60 text-purple-300 bg-purple-500/20">x2.0</button>
-                    <button onclick="selectMultiplier(3.0)" class="mult-btn glass-button py-1.5 rounded-xl text-xs font-bold font-mono text-slate-300">x3.0</button>
-                    <button onclick="selectMultiplier(5.0)" class="mult-btn glass-button py-1.5 rounded-xl text-xs font-bold font-mono text-slate-300">x5.0</button>
-                    <button onclick="selectMultiplier(10.0)" class="mult-btn glass-button py-1.5 rounded-xl text-xs font-bold font-mono text-slate-300">x10</button>
-                    <button onclick="selectMultiplier(20.0)" class="mult-btn glass-button py-1.5 rounded-xl text-xs font-bold font-mono text-slate-300">x20</button>
-                    <button onclick="selectMultiplier(50.0)" class="mult-btn glass-button py-1.5 rounded-xl text-xs font-bold font-mono text-slate-300">x50</button>
-                    <button onclick="selectMultiplier(100.0)" class="mult-btn glass-button py-1.5 rounded-xl text-xs font-bold font-mono text-slate-300">x100</button>
-                    <button onclick="toggleCustomModal()" class="glass-button py-1.5 rounded-xl text-xs font-bold font-mono text-pink-400 border-pink-500/30">Свой</button>
-                </div>
-            </div>
-        </section>
-
-        <section id="inventoryControls" class="glass-panel rounded-3xl p-4 space-y-3 hidden border border-agBorder">
-            <div class="flex justify-between items-center">
-                <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                    <i class="fa-solid fa-box-open text-pink-400"></i> ИСХОДНЫЙ ПРЕДМЕТ
-                </span>
-                <span id="selectedItemLabel" class="text-[11px] font-mono text-purple-300 font-bold">Выберите предмет</span>
-            </div>
-
-            <!-- Player Inventory List -->
-            <div id="playerInventoryList" class="flex gap-2 overflow-x-auto pb-1 min-h-[82px] items-center">
-                <!-- Populated dynamically -->
-            </div>
-
-            <div class="border-t border-agBorder/60 pt-2 flex justify-between items-center">
-                <span class="text-xs font-bold text-slate-300">ЦЕЛЕВОЙ ПРЕДМЕТ:</span>
-                <button onclick="openTargetItemSelector()" class="glass-button px-3 py-1 rounded-xl text-xs font-bold text-pink-400 border-pink-500/40">
-                    <span id="targetItemBtnText">Сменить цель &rarr;</span>
-                </button>
-            </div>
-        </section>
-
-        <button id="upgradeBtn" onclick="executeUpgrade()" 
-            class="w-full py-4 rounded-2xl bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 font-black text-white text-base tracking-widest uppercase shadow-lg shadow-purple-500/30 hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
-            <i class="fa-solid fa-wand-magic-sparkles text-amber-300 text-lg"></i>
-            <span>АПГРЕЙДИТЬ</span>
-        </button>
-
-        <section class="glass-panel rounded-3xl p-4 border border-agBorder">
-            <!-- Tabs Navigation Header -->
-            <div class="flex border-b border-agBorder pb-2 mb-3 gap-3">
-                <button onclick="switchTab('history')" id="tabBtnHistory" class="text-xs font-bold text-purple-400 border-b-2 border-purple-400 pb-1">
-                    <i class="fa-solid fa-clock-rotate-left mr-1"></i> История
-                </button>
-                <button onclick="switchTab('provably')" id="tabBtnProvably" class="text-xs font-bold text-slate-400 hover:text-slate-200 pb-1">
-                    <i class="fa-solid fa-shield-halved mr-1"></i> Честная игра
-                </button>
-                <button onclick="switchTab('stats')" id="tabBtnStats" class="text-xs font-bold text-slate-400 hover:text-slate-200 pb-1">
-                    <i class="fa-solid fa-chart-pie mr-1"></i> Статистика
-                </button>
-            </div>
-
-            <!-- Tab 1: Roll History -->
-            <div id="tabContentHistory" class="space-y-2 max-h-48 overflow-y-auto pr-1">
-                <div id="emptyHistoryMsg" class="text-center py-6 text-slate-500 text-xs">
-                    История пуста. Сделайте ваш первый апгрейд!
-                </div>
-                <div id="historyList" class="space-y-2"></div>
-            </div>
-
-            <!-- Tab 2: Provably Fair Verification Engine -->
-            <div id="tabContentProvably" class="hidden space-y-2.5 text-xs">
-                <p class="text-slate-400 text-[11px] leading-relaxed">
-                    Каждый результат генерируется до ролла с помощью алгоритма HMAC-SHA256. Вы можете проверить честность любого броска.
-                </p>
-                <div class="space-y-2 pt-1">
-                    <div>
-                        <span class="text-[10px] text-slate-500 uppercase font-bold">Хеш Сервера (Server Seed Hash)</span>
-                        <div id="serverSeedHash" class="bg-agDark p-2 rounded-xl font-mono text-[10px] text-purple-300 truncate select-all border border-agBorder">
-                            ...
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <span class="text-[10px] text-slate-500 uppercase font-bold">Клиентский Seed</span>
-                            <input type="text" id="clientSeedInput" value="alica_client_99" class="w-full bg-agDark p-2 rounded-xl font-mono text-[10px] text-slate-200 border border-agBorder focus:outline-none focus:border-purple-500">
-                        </div>
-                        <div>
-                            <span class="text-[10px] text-slate-500 uppercase font-bold">Нонс (Nonce)</span>
-                            <div id="nonceCounter" class="bg-agDark p-2 rounded-xl font-mono text-[10px] text-amber-300 border border-agBorder">0</div>
-                        </div>
-                    </div>
-                    <button onclick="openVerifierModal()" class="w-full glass-button py-2 rounded-xl text-xs font-bold text-purple-300 border-purple-500/30">
-                        <i class="fa-solid fa-calculator mr-1"></i> Калькулятор проверки
-                    </button>
-                </div>
-            </div>
-
-            <!-- Tab 3: Personal Analytics Stats -->
-            <div id="tabContentStats" class="hidden grid grid-cols-2 gap-2 text-xs">
-                <div class="bg-agDark/80 p-2.5 rounded-2xl border border-agBorder text-center">
-                    <span class="text-slate-400 text-[10px] block">Всего апагов</span>
-                    <span id="statTotalSpins" class="font-mono font-bold text-base text-purple-400">0</span>
-                </div>
-                <div class="bg-agDark/80 p-2.5 rounded-2xl border border-agBorder text-center">
-                    <span class="text-slate-400 text-[10px] block">Винрейт</span>
-                    <span id="statWinrate" class="font-mono font-bold text-base text-emerald-400">0%</span>
-                </div>
-                <div class="bg-agDark/80 p-2.5 rounded-2xl border border-agBorder text-center">
-                    <span class="text-slate-400 text-[10px] block">Макс Выигрыш</span>
-                    <span id="statMaxWin" class="font-mono font-bold text-base text-amber-400">0.00</span>
-                </div>
-                <div class="bg-agDark/80 p-2.5 rounded-2xl border border-agBorder text-center">
-                    <span class="text-slate-400 text-[10px] block">Чистый профит</span>
-                    <span id="statNetProfit" class="font-mono font-bold text-base text-slate-200">0.00</span>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- Custom Multiplier Modal -->
-    <div id="customModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-panel max-w-xs w-full p-5 rounded-3xl border border-agBorder space-y-4">
-            <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
-                <i class="fa-solid fa-bullseye text-pink-400"></i> Введите свой множитель
-            </h3>
-            <div>
-                <input type="number" id="customMultiplierInput" placeholder="например 7.5" step="0.1" min="1.1" max="100"
-                    class="w-full bg-agDark border border-agBorder rounded-2xl p-3 text-center font-mono font-bold text-slate-100 text-lg focus:outline-none focus:border-pink-500">
-            </div>
-            <div class="flex gap-2">
-                <button onclick="toggleCustomModal()" class="flex-1 glass-button py-2.5 rounded-xl text-xs font-bold text-slate-400">Отмена</button>
-                <button onclick="applyCustomMultiplier()" class="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 py-2.5 rounded-xl text-xs font-bold text-white">Применить</button>
-            </div>
-        </div>
+        <button id="rollBtn" class="btn-primary" onclick="playUpgrade()">АПГРЕЙДИТЬ</button>
+        <button class="tap-btn" onclick="addBonusCoins()">⚡ Натапать +500 монет</button>
+      </div>
     </div>
 
-    <!-- Target Item Selector Modal -->
-    <div id="targetItemModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-panel max-w-xs w-full p-5 rounded-3xl border border-agBorder space-y-3">
-            <h3 class="text-sm font-bold text-slate-100 flex items-center justify-between">
-                <span>Выберите целевой предмет</span>
-                <button onclick="openTargetItemSelector()" class="text-slate-400 text-xs">&times;</button>
-            </h3>
-            <div id="targetItemsGrid" class="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1">
-                <!-- Dynamic Items -->
-            </div>
+    <!-- ЛИДЕРБОРД -->
+    <div id="tab-leaderboard" class="tab-page">
+      <div class="card">
+        <h3 style="margin-bottom:12px;"><i class="fa-solid fa-crown" style="color:#f59e0b"></i> Топ Игроков</h3>
+        <div id="leaderboardList" class="leaderboard-list">
+          <!-- Генерируется через JS -->
         </div>
+      </div>
     </div>
+  </div>
 
-    <!-- Provably Fair Verifier Calculator Modal -->
-    <div id="verifierModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-panel max-w-xs w-full p-5 rounded-3xl border border-agBorder space-y-3 text-xs">
-            <h3 class="text-sm font-bold text-slate-100 flex items-center justify-between">
-                <span><i class="fa-solid fa-calculator text-purple-400 mr-1"></i> Проверка ролла</span>
-                <button onclick="openVerifierModal()" class="text-slate-400 text-xs">&times;</button>
-            </h3>
-            <div class="space-y-2">
-                <div>
-                    <label class="text-[10px] text-slate-400 block font-bold">Server Seed (Unhashed)</label>
-                    <input type="text" id="verifyServerSeed" placeholder="Введите Server Seed" class="w-full bg-agDark p-2 rounded-xl font-mono text-[10px] border border-agBorder">
-                </div>
-                <div>
-                    <label class="text-[10px] text-slate-400 block font-bold">Client Seed</label>
-                    <input type="text" id="verifyClientSeed" placeholder="Введите Client Seed" class="w-full bg-agDark p-2 rounded-xl font-mono text-[10px] border border-agBorder">
-                </div>
-                <div>
-                    <label class="text-[10px] text-slate-400 block font-bold">Nonce</label>
-                    <input type="number" id="verifyNonce" value="0" class="w-full bg-agDark p-2 rounded-xl font-mono text-[10px] border border-agBorder">
-                </div>
-                <button onclick="runVerification()" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 py-2 rounded-xl font-bold text-white">Расчитать результат</button>
-                <div id="verifyResultDisplay" class="p-2.5 bg-agDark rounded-xl text-center font-mono font-bold text-emerald-400 text-sm hidden">
-                    --.--
-                </div>
+  <script>
+    const tg = window.Telegram?.WebApp;
+    if (tg) { tg.ready(); tg.expand(); }
+
+    // Локальное хранилище данных
+    let state = {
+      balance: parseInt(localStorage.getItem('alica_bal')) || 1000,
+      name: tg?.initDataUnsafe?.user?.first_name || localStorage.getItem('alica_name') || 'Алиса',
+      wins: parseInt(localStorage.getItem('alica_wins')) || 0
+    };
+
+    // Лидерборд
+    let leaders = [
+      { name: "Александр", balance: 15400 },
+      { name: "Дмитрий", balance: 8900 },
+      { name: "Елена", balance: 4200 },
+      { name: state.name, balance: state.balance }
+    ];
+
+    function saveState() {
+      localStorage.setItem('alica_bal', state.balance);
+      localStorage.setItem('alica_name', state.name);
+      localStorage.setItem('alica_wins', state.wins);
+      document.getElementById('userBalance').innerText = state.balance;
+      updateLeaderboard();
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      document.getElementById('tab-' + tab).classList.add('active');
+    }
+
+    function recalcChance() {
+      const bet = parseFloat(document.getElementById('betInput').value) || 0;
+      const target = parseFloat(document.getElementById('targetInput').value) || 0;
+      if (bet <= 0 || target <= bet) {
+        document.getElementById('rollStatus').innerText = "Неверная цель";
+        return 0;
+      }
+      const winChance = Math.min(95, Math.max(1, ((bet / target) * 95).toFixed(2)));
+      document.getElementById('rollStatus').innerText = `Шанс ${winChance}%`;
+      
+      const arc = document.getElementById('winArc');
+      const circumference = 2 * Math.PI * 45;
+      const dash = (winChance / 100) * circumference;
+      arc.setAttribute('stroke-dasharray', `${dash} ${circumference}`);
+      return winChance;
+    }
+
+    function playUpgrade() {
+      const bet = parseFloat(document.getElementById('betInput').value) || 0;
+      const target = parseFloat(document.getElementById('targetInput').value) || 0;
+      const chance = recalcChance();
+
+      if (bet > state.balance) {
+        alert("Недостаточно монет! Нажмите кнопку снизу, чтобы натапать ещё.");
+        return;
+      }
+      if (chance <= 0) return;
+
+      state.balance -= bet;
+      saveState();
+
+      const btn = document.getElementById('rollBtn');
+      btn.disabled = true;
+
+      let elapsed = 0;
+      const interval = setInterval(() => {
+        const tempRoll = (Math.random() * 100).toFixed(2);
+        document.getElementById('rollNum').innerText = tempRoll;
+        elapsed += 50;
+
+        if (elapsed >= 1500) {
+          clearInterval(interval);
+          const finalRoll = (Math.random() * 100).toFixed(2);
+          document.getElementById('rollNum').innerText = finalRoll;
+
+          if (parseFloat(finalRoll) <= chance) {
+            state.balance += target;
+            state.wins += 1;
+            alert(`🎉 Победа! Вы выиграли ${target} монет!`);
+          } else {
+            alert(`💥 Неудача! Число ${finalRoll} больше чем ${chance}%`);
+          }
+          saveState();
+          btn.disabled = false;
+        }
+      }, 50);
+    }
+
+    function addBonusCoins() {
+      state.balance += 500;
+      saveState();
+    }
+
+    function updateLeaderboard() {
+      const myEntry = leaders.find(l => l.name === state.name);
+      if (myEntry) myEntry.balance = state.balance;
+      leaders.sort((a, b) => b.balance - a.balance);
+
+      const listEl = document.getElementById('leaderboardList');
+      listEl.innerHTML = '';
+      leaders.forEach((item, index) => {
+        const rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
+        listEl.innerHTML += `
+          <div class="leader-item">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div class="leader-rank ${rankClass}">${index + 1}</div>
+              <span>${item.name}</span>
             </div>
-        </div>
-    </div>
-
-    <script>
-        // --- Telegram WebApp SDK Initialization ---
-        const tg = window.Telegram?.WebApp;
-        if (tg) {
-            tg.ready();
-            tg.expand();
-            if (tg.setHeaderColor) tg.setHeaderColor('#080811');
-            if (tg.setBackgroundColor) tg.setBackgroundColor('#080811');
-
-            // Set Telegram User Info
-            const user = tg.initDataUnsafe?.user;
-            if (user) {
-                const name = user.first_name + (user.last_name ? ` ${user.last_name}` : '');
-                document.getElementById('userNameDisplay').innerText = name;
-                document.getElementById('avatarInitial').innerText = user.first_name.charAt(0).toUpperCase();
-            }
-        }
-
-        // --- Core Application State ---
-        const HOUSE_EDGE = 0.05; // 5% house edge
-        let userBalance = 1000.00;
-        let gameMode = 'cash'; // 'cash' or 'inventory'
-        let currentMultiplier = 2.0;
-        let isSpinning = false;
-        let soundEnabled = true;
-
-        // Statistics Tracker
-        let stats = {
-            totalSpins: 0,
-            wins: 0,
-            maxWin: 0,
-            netProfit: 0
-        };
-
-        // Provably Fair Cryptographic Seeds
-        let serverSeed = 'alica_secret_server_seed_' + Math.random().toString(36).substring(2);
-        let nonce = 0;
-
-        // Inventory Mock Items Catalog
-        const ITEM_CATALOG = [
-            { id: 1, name: 'Сайбер Клинок', rarity: 'Обычный', price: 100, icon: 'fa-box', color: 'border-slate-500 text-slate-300' },
-            { id: 2, name: 'Неоновые Очки', rarity: 'Редкий', price: 250, icon: 'fa-glasses', color: 'border-blue-500 text-blue-400' },
-            { id: 3, name: 'Плазменный Череп', rarity: 'Эпический', price: 600, icon: 'fa-skull', color: 'border-purple-500 text-purple-400' },
-            { id: 4, name: 'Алиса Дракон', rarity: 'Легендарный', price: 1500, icon: 'fa-dragon', color: 'border-amber-500 text-amber-400' },
-            { id: 5, name: 'Корона Анубиса', rarity: 'Аркана', price: 5000, icon: 'fa-crown', color: 'border-rose-500 text-rose-400' }
-        ];
-
-        let playerInventory = [
-            { ...ITEM_CATALOG[0], instanceId: 101 },
-            { ...ITEM_CATALOG[1], instanceId: 102 }
-        ];
-
-        let selectedInventoryItem = playerInventory[0];
-        let selectedTargetItem = ITEM_CATALOG[2];
-
-        // Web Audio Synthesizer Engine
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        let audioCtx = null;
-
-        function initAudio() {
-            if (!audioCtx) audioCtx = new AudioContextClass();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-        }
-
-        function playSound(type) {
-            if (!soundEnabled) return;
-            try {
-                initAudio();
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                const now = audioCtx.currentTime;
-
-                if (type === 'tick') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(520, now);
-                    osc.frequency.exponentialRampToValueAtTime(120, now + 0.02);
-                    gain.gain.setValueAtTime(0.12, now);
-                    gain.gain.linearRampToValueAtTime(0.01, now + 0.02);
-                    osc.start(now);
-                    osc.stop(now + 0.02);
-                } else if (type === 'win') {
-                    [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
-                        const o = audioCtx.createOscillator();
-                        const g = audioCtx.createGain();
-                        o.connect(g);
-                        g.connect(audioCtx.destination);
-                        o.type = 'triangle';
-                        o.frequency.setValueAtTime(freq, now + idx * 0.06);
-                        g.gain.setValueAtTime(0.18, now + idx * 0.06);
-                        g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.22);
-                        o.start(now + idx * 0.06);
-                        o.stop(now + idx * 0.06 + 0.22);
-                    });
-                } else if (type === 'lose') {
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(140, now);
-                    osc.frequency.exponentialRampToValueAtTime(35, now + 0.28);
-                    gain.gain.setValueAtTime(0.22, now);
-                    gain.gain.linearRampToValueAtTime(0.01, now + 0.28);
-                    osc.start(now);
-                    osc.stop(now + 0.28);
-                }
-            } catch (e) {
-                console.warn('Audio output failed:', e);
-            }
-        }
-
-        function triggerHaptic(style = 'medium') {
-            if (tg?.HapticFeedback) {
-                if (style === 'success') tg.HapticFeedback.notificationOccurred('success');
-                else if (style === 'error') tg.HapticFeedback.notificationOccurred('error');
-                else tg.HapticFeedback.impactOccurred(style);
-            }
-        }
-
-        function toggleSound() {
-            soundEnabled = !soundEnabled;
-            const icon = document.getElementById('soundIcon');
-            icon.className = soundEnabled ? 'fa-solid fa-volume-high text-xs text-purple-400' : 'fa-solid fa-volume-xmark text-xs text-slate-500';
-        }
-
-        function claimTapBonus() {
-            userBalance += 100;
-            updateBalanceUI();
-            calculateUpgradeParams();
-            playSound('win');
-            triggerHaptic('light');
-        }
-
-        // --- Upgrade Calculator Functions ---
-        function calculateUpgradeParams() {
-            let stake = 0;
-            let targetReward = 0;
-
-            if (gameMode === 'cash') {
-                const stakeInput = document.getElementById('stakeInput');
-                stake = parseFloat(stakeInput.value) || 0;
-                if (stake > userBalance) {
-                    stake = userBalance;
-                    stakeInput.value = stake;
-                }
-                targetReward = stake * currentMultiplier;
-            } else {
-                if (selectedInventoryItem) stake = selectedInventoryItem.price;
-                if (selectedTargetItem) targetReward = selectedTargetItem.price;
-                currentMultiplier = targetReward / (stake || 1);
-            }
-
-            // Formula: Win Chance % = (Stake / Target) * (100 - House Edge)
-            let rawChance = (stake / (targetReward || 1)) * 100;
-            if (isNaN(rawChance) || !isFinite(rawChance)) rawChance = 0;
-
-            let winChance = rawChance * (1 - HOUSE_EDGE);
-            winChance = Math.min(Math.max(winChance, 0.1), 95.0); // Clamp between 0.1% and 95%
-
-            // UI Refresh
-            document.getElementById('targetRewardText').innerText = `${targetReward.toFixed(2)} Coins`;
-            document.getElementById('chanceDisplay').innerText = `${winChance.toFixed(2)}%`;
-            document.getElementById('multiplierDisplay').innerText = `x${currentMultiplier.toFixed(2)} МНОЖИТЕЛЬ`;
-            document.getElementById('winRangeText').innerText = `0.00 - ${winChance.toFixed(2)}`;
-            document.getElementById('rollTargetText').innerText = `\u2264 ${winChance.toFixed(2)}`;
-
-            updateRadarSector(winChance);
-            return { stake, targetReward, winChance };
-        }
-
-        function updateRadarSector(winChancePercent) {
-            const path = document.getElementById('winSector');
-            const radius = 82;
-            const cx = 100, cy = 100;
-
-            const angle = (winChancePercent / 100) * 2 * Math.PI;
-
-            const x1 = cx + radius * Math.cos(0);
-            const y1 = cy + radius * Math.sin(0);
-            const x2 = cx + radius * Math.cos(angle);
-            const y2 = cy + radius * Math.sin(angle);
-
-            const largeArcFlag = winChancePercent > 50 ? 1 : 0;
-
-            const d = [
-                `M ${x1} ${y1}`,
-                `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`
-            ].join(' ');
-
-            path.setAttribute('d', d);
-        }
-
-        function switchGameMode(mode) {
-            gameMode = mode;
-            const cashBtn = document.getElementById('modeCashBtn');
-            const invBtn = document.getElementById('modeInventoryBtn');
-            const cashControls = document.getElementById('cashControls');
-            const invControls = document.getElementById('inventoryControls');
-
-            if (mode === 'cash') {
-                cashBtn.className = 'py-2 rounded-xl text-xs font-bold transition-all bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg';
-                invBtn.className = 'py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200';
-                cashControls.classList.remove('hidden');
-                invControls.classList.add('hidden');
-            } else {
-                invBtn.className = 'py-2 rounded-xl text-xs font-bold transition-all bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg';
-                cashBtn.className = 'py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200';
-                invControls.classList.remove('hidden');
-                cashControls.classList.add('hidden');
-                renderPlayerInventory();
-            }
-
-            calculateUpgradeParams();
-            triggerHaptic('selection');
-        }
-
-        function selectMultiplier(mult) {
-            currentMultiplier = mult;
-            document.querySelectorAll('.mult-btn').forEach(btn => {
-                const match = btn.innerText === `x${mult}` || (mult >= 10 && btn.innerText === `x${mult}`);
-                if (match) {
-                    btn.className = 'mult-btn glass-button py-1.5 rounded-xl text-xs font-bold font-mono border-purple-500/60 text-purple-300 bg-purple-500/20';
-                } else {
-                    btn.className = 'mult-btn glass-button py-1.5 rounded-xl text-xs font-bold font-mono text-slate-300';
-                }
-            });
-            calculateUpgradeParams();
-            triggerHaptic('light');
-        }
-
-        function setStakeMin() {
-            document.getElementById('stakeInput').value = 10;
-            calculateUpgradeParams();
-            triggerHaptic('light');
-        }
-
-        function modifyStake(factor) {
-            const current = parseFloat(document.getElementById('stakeInput').value) || 0;
-            const newVal = Math.max(Math.floor(current * factor), 1);
-            document.getElementById('stakeInput').value = Math.min(newVal, userBalance);
-            calculateUpgradeParams();
-            triggerHaptic('light');
-        }
-
-        function setStakeFraction(fraction) {
-            const val = Math.floor(userBalance * fraction);
-            document.getElementById('stakeInput').value = Math.max(val, 1);
-            calculateUpgradeParams();
-            triggerHaptic('light');
-        }
-
-        // --- Inventory Management ---
-        function renderPlayerInventory() {
-            const container = document.getElementById('playerInventoryList');
-            container.innerHTML = '';
-
-            if (playerInventory.length === 0) {
-                container.innerHTML = `<span class="text-xs text-slate-500 italic py-3">Инвентарь пуст. Заработайте предметы!</span>`;
-                return;
-            }
-
-            playerInventory.forEach(item => {
-                const card = document.createElement('div');
-                const isSelected = selectedInventoryItem && selectedInventoryItem.instanceId === item.instanceId;
-                card.className = `flex-shrink-0 bg-agDark/90 border ${item.color} ${isSelected ? 'ring-2 ring-pink-500 bg-purple-950/30' : ''} rounded-xl p-2 w-20 text-center cursor-pointer transition-all active:scale-95`;
-                card.onclick = () => {
-                    selectedInventoryItem = item;
-                    document.getElementById('selectedItemLabel').innerText = item.name;
-                    renderPlayerInventory();
-                    calculateUpgradeParams();
-                    triggerHaptic('selection');
-                };
-                card.innerHTML = `
-                    <i class="fa-solid ${item.icon} text-base mb-1 block"></i>
-                    <div class="text-[9px] font-bold text-slate-200 truncate">${item.name}</div>
-                    <div class="text-[9px] font-mono text-amber-400 font-semibold">${item.price} 🌟</div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        function openTargetItemSelector() {
-            const modal = document.getElementById('targetItemModal');
-            modal.classList.toggle('hidden');
-
-            const grid = document.getElementById('targetItemsGrid');
-            grid.innerHTML = '';
-            ITEM_CATALOG.forEach(item => {
-                const card = document.createElement('div');
-                card.className = `bg-agDark border ${item.color} rounded-2xl p-2.5 text-center cursor-pointer hover:bg-agCard transition-all`;
-                card.onclick = () => {
-                    selectedTargetItem = item;
-                    document.getElementById('targetItemBtnText').innerText = `${item.name} (${item.price}🌟)`;
-                    modal.classList.add('hidden');
-                    calculateUpgradeParams();
-                    triggerHaptic('selection');
-                };
-                card.innerHTML = `
-                    <i class="fa-solid ${item.icon} text-lg mb-1 block"></i>
-                    <div class="text-[10px] font-bold text-slate-100">${item.name}</div>
-                    <div class="text-[9px] font-mono text-emerald-400 font-bold">${item.price} Coins</div>
-                `;
-                grid.appendChild(card);
-            });
-        }
-
-        // --- Cryptographic HMAC SHA-256 Provably Fair Generator ---
-        function getProvablyFairRoll(clientSeed, serverSeed, nonce) {
-            const message = `${clientSeed}:${nonce}`;
-            const hash = CryptoJS.HmacSHA256(message, serverSeed).toString(CryptoJS.enc.Hex);
-            const subHash = hash.substring(0, 8);
-            const num = parseInt(subHash, 16);
-            return parseFloat(((num % 10000) / 100).toFixed(2));
-        }
-
-        // --- Core Upgrade Spin Engine ---
-        function executeUpgrade() {
-            if (isSpinning) return;
-
-            const { stake, targetReward, winChance } = calculateUpgradeParams();
-
-            if (gameMode === 'cash') {
-                if (stake <= 0 || stake > userBalance) {
-                    alert('Недостаточно виртуальной валюты!');
-                    return;
-                }
-                userBalance -= stake;
-            } else {
-                if (!selectedInventoryItem) {
-                    alert('Выберите предмет из инвентаря!');
-                    return;
-                }
-            }
-
-            updateBalanceUI();
-
-            isSpinning = true;
-            document.getElementById('upgradeBtn').disabled = true;
-            document.getElementById('upgradeBtn').classList.add('opacity-50', 'cursor-not-allowed');
-
-            const badge = document.getElementById('statusBadge');
-            badge.className = 'mt-2 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-pink-500/20 border border-pink-500/40 text-pink-300 animate-pulse';
-            badge.innerText = 'КРУТИМ...';
-
-            // Cryptographic Roll Calculation
-            const clientSeed = document.getElementById('clientSeedInput').value || 'alica_default';
-            const rolledNumber = getProvablyFairRoll(clientSeed, serverSeed, nonce);
-            const isWin = rolledNumber <= winChance;
-
-            // Smooth Acceleration-Deceleration Spin Calculations
-            const pointerGroup = document.getElementById('radarPointerGroup');
-            const targetDegree = (rolledNumber / 100) * 360;
-            const fullSpins = 4 * 360;
-            const finalRotation = fullSpins + targetDegree;
-
-            let currentRotation = 0;
-            const duration = 2400; // 2.4s spin duration
-            const startTime = performance.now();
-            let lastTickDegree = 0;
-
-            function animateSpin(now) {
-                const elapsed = now - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                // Cubic easing out curve
-                const easeOut = 1 - Math.pow(1 - progress, 3);
-
-                currentRotation = easeOut * finalRotation;
-                pointerGroup.style.transform = `rotate(${currentRotation}deg)`;
-
-                if (currentRotation - lastTickDegree > 25) {
-                    playSound('tick');
-                    triggerHaptic('light');
-                    lastTickDegree = currentRotation;
-                }
-
-                if (progress < 1) {
-                    requestAnimationFrame(animateSpin);
-                } else {
-                    finishUpgrade(isWin, rolledNumber, winChance, stake, targetReward);
-                }
-            }
-
-            requestAnimationFrame(animateSpin);
-        }
-
-        function finishUpgrade(isWin, rolledNumber, winChance, stake, targetReward) {
-            isSpinning = false;
-            document.getElementById('upgradeBtn').disabled = false;
-            document.getElementById('upgradeBtn').classList.remove('opacity-50', 'cursor-not-allowed');
-
-            const badge = document.getElementById('statusBadge');
-
-            if (isWin) {
-                if (gameMode === 'cash') {
-                    userBalance += targetReward;
-                } else {
-                    playerInventory = playerInventory.filter(i => i.instanceId !== selectedInventoryItem.instanceId);
-                    playerInventory.push({ ...selectedTargetItem, instanceId: Date.now() });
-                    renderPlayerInventory();
-                }
-
-                badge.className = 'mt-2 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 glow-win';
-                badge.innerText = `ВЫИГРЫШ (+${(targetReward - stake).toFixed(2)})`;
-
-                playSound('win');
-                triggerHaptic('success');
-
-                try {
-                    confetti({ particleCount: 70, spread: 80, origin: { y: 0.7 } });
-                } catch (e) {}
-
-            } else {
-                if (gameMode === 'inventory') {
-                    playerInventory = playerInventory.filter(i => i.instanceId !== selectedInventoryItem.instanceId);
-                    if (playerInventory.length > 0) selectedInventoryItem = playerInventory[0];
-                    renderPlayerInventory();
-                }
-
-                badge.className = 'mt-2 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-400 glow-lose';
-                badge.innerText = 'НЕУДАЧА';
-
-                playSound('lose');
-                triggerHaptic('error');
-
-                document.querySelector('main').classList.add('animate-shake');
-                setTimeout(() => document.querySelector('main').classList.remove('animate-shake'), 400);
-            }
-
-            // Nonce Increment and Stats Updates
-            nonce++;
-            document.getElementById('nonceCounter').innerText = nonce;
-
-            stats.totalSpins++;
-            if (isWin) stats.wins++;
-            const profit = isWin ? (targetReward - stake) : -stake;
-            stats.netProfit += profit;
-            if (isWin && profit > stats.maxWin) stats.maxWin = profit;
-
-            updateStatsUI();
-            updateBalanceUI();
-            addHistoryEntry(isWin, stake, targetReward, rolledNumber, winChance);
-        }
-
-        // --- History Feed ---
-        function addHistoryEntry(isWin, stake, reward, roll, winChance) {
-            const list = document.getElementById('historyList');
-            document.getElementById('emptyHistoryMsg').classList.add('hidden');
-
-            const item = document.createElement('div');
-            item.className = `p-2.5 rounded-2xl border flex items-center justify-between text-xs ${
-                isWin ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-300' : 'bg-rose-950/20 border-rose-500/30 text-rose-300'
-            }`;
-
-            item.innerHTML = `
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid ${isWin ? 'fa-circle-check text-emerald-400' : 'fa-circle-xmark text-rose-400'} text-base"></i>
-                    <div>
-                        <div class="font-bold text-slate-100">${stake.toFixed(0)} &rarr; ${reward.toFixed(0)} 🌟</div>
-                        <div class="text-[10px] text-slate-400 font-mono">Ролл: ${roll.toFixed(2)} (&le; ${winChance.toFixed(2)})</div>
-                    </div>
-                </div>
-                <div class="text-right font-mono font-bold">
-                    ${isWin ? `+${(reward - stake).toFixed(2)}` : `-${stake.toFixed(2)}`}
-                </div>
-            `;
-
-            list.prepend(item);
-            if (list.children.length > 8) list.removeChild(list.lastChild);
-        }
-
-        // --- Helpers & Verification Modal ---
-        function updateBalanceUI() {
-            document.getElementById('userBalanceText').innerText = userBalance.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            document.getElementById('maxStakeLabel').innerText = userBalance.toFixed(0);
-        }
-
-        function updateStatsUI() {
-            document.getElementById('statTotalSpins').innerText = stats.totalSpins;
-            const winrate = stats.totalSpins > 0 ? ((stats.wins / stats.totalSpins) * 100).toFixed(1) : 0;
-            document.getElementById('statWinrate').innerText = `${winrate}%`;
-            document.getElementById('statMaxWin').innerText = stats.maxWin.toFixed(2);
-            document.getElementById('statNetProfit').innerText = stats.netProfit.toFixed(2);
-        }
-
-        function switchTab(tab) {
-            const historyTab = document.getElementById('tabContentHistory');
-            const provablyTab = document.getElementById('tabContentProvably');
-            const statsTab = document.getElementById('tabContentStats');
-            
-            const btnH = document.getElementById('tabBtnHistory');
-            const btnP = document.getElementById('tabBtnProvably');
-            const btnS = document.getElementById('tabBtnStats');
-
-            historyTab.classList.add('hidden');
-            provablyTab.classList.add('hidden');
-            statsTab.classList.add('hidden');
-
-            btnH.className = 'text-xs font-bold text-slate-400 hover:text-slate-200 pb-1';
-            btnP.className = 'text-xs font-bold text-slate-400 hover:text-slate-200 pb-1';
-            btnS.className = 'text-xs font-bold text-slate-400 hover:text-slate-200 pb-1';
-
-            if (tab === 'history') {
-                historyTab.classList.remove('hidden');
-                btnH.className = 'text-xs font-bold text-purple-400 border-b-2 border-purple-400 pb-1';
-            } else if (tab === 'provably') {
-                provablyTab.classList.remove('hidden');
-                btnP.className = 'text-xs font-bold text-purple-400 border-b-2 border-purple-400 pb-1';
-            } else {
-                statsTab.classList.remove('hidden');
-                btnS.className = 'text-xs font-bold text-purple-400 border-b-2 border-purple-400 pb-1';
-            }
-            triggerHaptic('selection');
-        }
-
-        function toggleCustomModal() {
-            document.getElementById('customModal').classList.toggle('hidden');
-        }
-
-        function applyCustomMultiplier() {
-            const val = parseFloat(document.getElementById('customMultiplierInput').value);
-            if (val && val >= 1.1 && val <= 100) {
-                currentMultiplier = val;
-                calculateUpgradeParams();
-                toggleCustomModal();
-                triggerHaptic('medium');
-            } else {
-                alert('Введите множитель от 1.1x до 100x');
-            }
-        }
-
-        function openVerifierModal() {
-            document.getElementById('verifierModal').classList.toggle('hidden');
-        }
-
-        function runVerification() {
-            const sSeed = document.getElementById('verifyServerSeed').value;
-            const cSeed = document.getElementById('verifyClientSeed').value;
-            const n = parseInt(document.getElementById('verifyNonce').value) || 0;
-
-            if (!sSeed || !cSeed) {
-                alert('Заполните все поля');
-                return;
-            }
-
-            const result = getProvablyFairRoll(cSeed, sSeed, n);
-            const display = document.getElementById('verifyResultDisplay');
-            display.innerText = `Результат ролла: ${result.toFixed(2)}`;
-            display.classList.remove('hidden');
-        }
-
-        // On Load initialization
-        window.onload = () => {
-            const seedHash = CryptoJS.SHA256(serverSeed).toString(CryptoJS.enc.Hex);
-            document.getElementById('serverSeedHash').innerText = seedHash;
-
-            updateBalanceUI();
-            calculateUpgradeParams();
-        };
-    </script>
+            <strong style="color:#f59e0b">${item.balance} 🪙</strong>
+          </div>
+        `;
+      });
+    }
+
+    // Инициализация
+    document.getElementById('userName').innerText = state.name;
+    saveState();
+    recalcChance();
+  </script>
 </body>
 </html>
